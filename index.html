@@ -127,6 +127,7 @@ footer{background:var(--ink);color:#fff;padding:48px max(5vw,16px)}
 .foot .logo{color:var(--gold);font-size:clamp(48px,9vw,120px);line-height:.9}
 .foot p{margin:0;font-size:13px;opacity:.8}
 @media(max-width:760px){
+  .gamebox canvas{height:min(80vh,680px)}
   .links{display:none}
   .buddy{width:86vw}.cayset{width:22vw}
   .step{width:84vw;left:8vw!important;right:auto!important;text-align:center!important;top:auto;bottom:6vh}
@@ -365,7 +366,8 @@ footer{background:var(--ink);color:#fff;padding:48px max(5vw,16px)}
     $('caught').textContent = '0'; $('left').textContent = N; $('win').classList.remove('show'); $('ghint').style.opacity = 1;
   };
   ring.onload = () => reset(); reset();
-  const sim = () => { const sz = Math.min(W * .42, H * .5, 300); return { x: W / 2, y: H - sz * .42, k: sz / 430 }; };
+  const small = () => W < 600;
+  const sim = () => { const sz = small() ? Math.min(W * .5, 200) : Math.min(W * .42, H * .5, 300); return { x: W / 2, y: H - sz * .42 - 8, k: sz / 430 }; };
   const simBox = () => { const S = sim(); return { x: S.x + (350 - RC.x) * S.k, y: S.y + (350 - RC.y) * S.k, s: 700 * S.k }; };
   const toLocal = (x, y) => { const S = sim(); return { x: (x - S.x) / S.k + RC.x, y: (y - S.y) / S.k + RC.y }; };
   const blobPath = (c, pts, cx, cy) => {
@@ -413,21 +415,22 @@ footer{background:var(--ink);color:#fff;padding:48px max(5vw,16px)}
     ctx.fillStyle = '#D9D3C8'; for (let x = 10; x < W; x += 46) ctx.fillRect(x, ry + 10, 6, 16);
     ctx.fillStyle = '#5B3A24'; ctx.fillRect(0, H - 6, W, 6);
     if (ringArrived) ctx.drawImage(oc, S.x - RC.x * S.k, S.y - RC.y * S.k, 700 * S.k, 700 * S.k);
-    for (const p of pieces) { p.vy += .32; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.vx *= .995; }
+    const grav = small() ? .42 : .32;
+    for (const p of pieces) { p.vy += grav; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.vx *= .995; }
     for (const g of gulls) {
       g.f = (g.f + .35) % 16; let tgt = null, bd = 1e9;
-      for (const p of pieces) { const d = Math.hypot(p.x - g.x, p.y - g.y); if (d < bd && d < 420 && p.y < H * .8) { bd = d; tgt = p; } }
+      for (const p of pieces) { const d = Math.hypot(p.x - g.x, p.y - g.y); if (d < bd && d < (small() ? 170 : 420) && p.y < H * (small() ? .55 : .8)) { bd = d; tgt = p; } }
       if (tgt) {
-        g.vx += (tgt.x - g.x) * .007; g.vy += (tgt.y - g.y) * .007; g.vx *= .93; g.vy *= .93;
-        if (bd < 34) { pieces.splice(pieces.indexOf(tgt), 1); pops.push({ x: g.x, y: g.y - 34, a: 1 }); g.eat = 20; fed++; $('caught').textContent = fed; }
+        const pull = small() ? .004 : .007; g.vx += (tgt.x - g.x) * pull; g.vy += (tgt.y - g.y) * pull; g.vx *= .93; g.vy *= .93;
+        if (bd < (small() ? 26 : 34)) { pieces.splice(pieces.indexOf(tgt), 1); pops.push({ x: g.x, y: g.y - 34, a: 1 }); g.eat = 20; fed++; $('caught').textContent = fed; }
       } else {
-        g.vy += ((H * .28) + Math.sin(g.f * .4) * 18 - g.y) * .0015; g.vy *= .96;
+        g.vy += ((H * (small() ? .16 : .28)) + Math.sin(g.f * .4) * 18 - g.y) * .0015; g.vy *= .96;
         if (Math.abs(g.vx) < 1.6) g.vx = g.vx < 0 ? -2.2 : 2.2; g.vx = clamp(g.vx, -3.4, 3.4);
         if (g.x < 60 && g.vx < 0 && Math.random() < .02) g.vx *= -1; if (g.x > W - 60 && g.vx > 0 && Math.random() < .02) g.vx *= -1;
       }
-      g.x += g.vx; g.y += g.vy; if (g.x < -50) g.x = W + 40; if (g.x > W + 50) g.x = -40; g.y = clamp(g.y, 40, H * .62);
+      g.x += g.vx; g.y += g.vy; if (g.x < -50) g.x = W + 40; if (g.x > W + 50) g.x = -40; g.y = clamp(g.y, 40, H * (small() ? .5 : .62));
       if (gimg.complete && gimg.naturalWidth) {
-        const fw = gimg.naturalWidth / 4, fh = gimg.naturalHeight / 4, k = Math.floor(g.f), w = 120 * g.s * (g.eat > 0 ? 1.12 : 1), h = w * fh / fw;
+        const fw = gimg.naturalWidth / 4, fh = gimg.naturalHeight / 4, k = Math.floor(g.f), w = (small() ? 82 : 120) * g.s * (g.eat > 0 ? 1.12 : 1), h = w * fh / fw;
         ctx.save(); ctx.translate(g.x, g.y); if (g.vx > 0) ctx.scale(-1, 1);
         ctx.drawImage(gimg, (k % 4) * fw, Math.floor(k / 4) * fh, fw, fh, -w / 2, -h / 2, w, h); ctx.restore();
       }
