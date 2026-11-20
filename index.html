@@ -108,7 +108,7 @@ a{color:inherit}
 .stats b{display:block;font-family:'Luckiest Guy',sans-serif;font-weight:400;font-size:38px;color:var(--red);letter-spacing:0}
 .gamebox{position:relative;margin-top:28px;border-radius:28px;overflow:hidden;background:#7FA3B5;box-shadow:0 0 0 3px var(--ink);isolation:isolate}
 .gamebox::before{content:"";position:absolute;inset:-8px;z-index:-1;background:linear-gradient(rgba(255,255,255,.12),rgba(255,255,255,0) 40%,rgba(10,30,50,.2)),url(img/bosphorus.webp) 50% 62%/cover;filter:blur(2px) saturate(1.1);pointer-events:none}
-.gamebox canvas{display:block;width:100%;height:clamp(380px,52vw,560px);touch-action:manipulation;cursor:crosshair}
+.gamebox canvas{display:block;width:100%;height:clamp(380px,52vw,560px);touch-action:pan-x pan-y;cursor:crosshair}
 .ghint{position:absolute;left:50%;top:14px;transform:translateX(-50%);font-size:14px;font-weight:800;color:var(--ink);background:rgba(255,255,255,.75);padding:6px 14px;border-radius:999px;white-space:nowrap;transition:opacity .4s}
 .win{position:absolute;inset:0;display:none;place-items:center;background:rgba(221,239,244,.88)}
 .win.show{display:grid}
@@ -399,6 +399,8 @@ footer{background:var(--ink);color:#fff;padding:48px max(5vw,16px)}
     pieces.push({ img: held.img, x: held.x, y: held.y, vx: clamp(vx, -18, 18), vy: clamp(vy, -20, 8), rot: 0, vr: (Math.random() - .5) * .3 }); held = null;
   };
   cv.addEventListener('pointerup', release); cv.addEventListener('pointercancel', release);
+  cv.addEventListener('touchstart', e => { if (held) e.preventDefault(); }, { passive: false });
+  cv.addEventListener('touchmove', e => { if (held) e.preventDefault(); }, { passive: false });
   const finish = () => {
     done = true; const win = fed >= NEED;
     $('wtitle').textContent = win ? 'Free simit!' : `${fed} of ${N} fed`;
